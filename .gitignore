@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+Fake-News-Detection-and-Classification-A-Comparative-Study-of-CNN-LLMs-and-NLP-Models/
+
+.DS_Store
+Thumbs.db

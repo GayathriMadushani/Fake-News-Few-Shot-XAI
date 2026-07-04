@@ -1,0 +1,15 @@
+Baseline Model Accuracy: 0.94
+
+Classification Report:
+              precision    recall  f1-score   support
+
+        fake       0.93      0.95      0.94       500
+        real       0.95      0.93      0.94       500
+
+    accuracy                           0.94      1000
+   macro avg       0.94      0.94      0.94      1000
+weighted avg       0.94      0.94      0.94      1000
+
+Confusion Matrix:
+[[474  26]
+ [ 34 466]]
