@@ -1,0 +1,14 @@
+{
+  "model_name": "few_8_shot_model",
+  "classes": [
+    "fake",
+    "real"
+  ],
+  "training_samples": 16,
+  "examples_per_class": 8,
+  "best_C": 4.0,
+  "validation_macro_f1": 0.6978575978374011,
+  "test_accuracy": 0.7127016129032258,
+  "test_weighted_f1": 0.6919894349673048,
+  "recommended_uncertain_threshold": 0.6
+}

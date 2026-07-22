@@ -1,77 +1,191 @@
-import pandas as pd
-import joblib
+"""
+Train the full-data baseline model.
+
+This model uses the entire training dataset and is expected to
+be more stable than the few-shot models.
+"""
+
 from pathlib import Path
 
-from sklearn.pipeline import Pipeline
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import joblib
+import pandas as pd
+
+from sklearn.metrics import (
+    accuracy_score,
+    classification_report,
+    confusion_matrix,
+    precision_recall_fscore_support,
+)
+
+from train_few_shot import build_model
+
 
 DATA_DIR = Path("data/processed")
 MODEL_DIR = Path("models")
 RESULT_DIR = Path("outputs/results")
 
-MODEL_DIR.mkdir(parents=True, exist_ok=True)
-RESULT_DIR.mkdir(parents=True, exist_ok=True)
+MODEL_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
 
-# Load cleaned datasets
-train_df = pd.read_csv(DATA_DIR / "train_clean.csv")
-test_df = pd.read_csv(DATA_DIR / "test_clean.csv")
+RESULT_DIR.mkdir(
+    parents=True,
+    exist_ok=True,
+)
 
-# Fix missing values
-train_df = train_df.dropna(subset=["label"])
-test_df = test_df.dropna(subset=["label"])
 
-train_df["clean_text"] = train_df["clean_text"].fillna("").astype(str)
-test_df["clean_text"] = test_df["clean_text"].fillna("").astype(str)
+def load_dataset(
+    file_path: Path,
+) -> pd.DataFrame:
+    """
+    Load and clean a processed CSV file.
+    """
 
-# Remove empty text rows
-train_df = train_df[train_df["clean_text"].str.strip() != ""]
-test_df = test_df[test_df["clean_text"].str.strip() != ""]
+    if not file_path.exists():
+        raise FileNotFoundError(
+            f"Dataset was not found: {file_path}"
+        )
 
-print("Train data after cleaning:", train_df.shape)
-print("Test data after cleaning:", test_df.shape)
+    df = pd.read_csv(
+        file_path
+    )
 
-X_train = train_df["clean_text"]
-y_train = train_df["label"]
+    df = df.dropna(
+        subset=["clean_text", "label"]
+    )
 
-X_test = test_df["clean_text"]
-y_test = test_df["label"]
+    df["clean_text"] = (
+        df["clean_text"]
+        .astype(str)
+        .str.strip()
+    )
 
-# Baseline model: TF-IDF + Logistic Regression
-model = Pipeline([
-    ("tfidf", TfidfVectorizer(max_features=20000, ngram_range=(1, 2))),
-    ("clf", LogisticRegression(max_iter=1000, class_weight="balanced"))
-])
+    df["label"] = (
+        df["label"]
+        .astype(str)
+        .str.lower()
+        .str.strip()
+    )
 
-# Train model
-model.fit(X_train, y_train)
+    df = df[
+        df["clean_text"] != ""
+    ]
 
-# Predict test data
-predictions = model.predict(X_test)
+    df = df[
+        df["label"].isin(
+            ["fake", "real"]
+        )
+    ]
 
-# Evaluate model
-accuracy = accuracy_score(y_test, predictions)
-report = classification_report(y_test, predictions)
-matrix = confusion_matrix(y_test, predictions)
+    return df
 
-print("\nBaseline Model Accuracy:", accuracy)
-print("\nClassification Report:")
-print(report)
-print("\nConfusion Matrix:")
-print(matrix)
 
-# Save model
-joblib.dump(model, MODEL_DIR / "baseline_tfidf_logistic.pkl")
+def main() -> None:
+    train_df = load_dataset(
+        DATA_DIR / "train_clean.csv"
+    )
 
-# Save results
-with open(RESULT_DIR / "baseline_results.txt", "w", encoding="utf-8") as f:
-    f.write(f"Baseline Model Accuracy: {accuracy}\n\n")
-    f.write("Classification Report:\n")
-    f.write(report)
-    f.write("\nConfusion Matrix:\n")
-    f.write(str(matrix))
+    test_df = load_dataset(
+        DATA_DIR / "test_clean.csv"
+    )
 
-print("\nBaseline model saved successfully.")
-print("Model saved to: models/baseline_tfidf_logistic.pkl")
-print("Results saved to: outputs/results/baseline_results.txt")
+    print("Training samples:", len(train_df))
+    print("Test samples:", len(test_df))
+
+    print("\nTraining label distribution:")
+    print(train_df["label"].value_counts())
+
+    model = build_model(
+        c_value=2.0
+    )
+
+    print("\nTraining baseline model...")
+
+    model.fit(
+        train_df["clean_text"],
+        train_df["label"],
+    )
+
+    predictions = model.predict(
+        test_df["clean_text"]
+    )
+
+    accuracy = accuracy_score(
+        test_df["label"],
+        predictions,
+    )
+
+    (
+        precision,
+        recall,
+        f1_score,
+        _,
+    ) = precision_recall_fscore_support(
+        test_df["label"],
+        predictions,
+        average="weighted",
+        zero_division=0,
+    )
+
+    report = classification_report(
+        test_df["label"],
+        predictions,
+        labels=["fake", "real"],
+        zero_division=0,
+    )
+
+    matrix = confusion_matrix(
+        test_df["label"],
+        predictions,
+        labels=["fake", "real"],
+    )
+
+    print("\nBaseline Accuracy:", round(accuracy, 4))
+    print("Baseline Precision:", round(precision, 4))
+    print("Baseline Recall:", round(recall, 4))
+    print("Baseline F1-score:", round(f1_score, 4))
+
+    print("\nClassification Report:")
+    print(report)
+
+    print("Confusion Matrix [fake, real]:")
+    print(matrix)
+
+    model_path = (
+        MODEL_DIR /
+        "baseline_tfidf_logistic.pkl"
+    )
+
+    joblib.dump(
+        model,
+        model_path,
+    )
+
+    result_text = (
+        f"Baseline Accuracy: {accuracy:.4f}\n"
+        f"Baseline Precision: {precision:.4f}\n"
+        f"Baseline Recall: {recall:.4f}\n"
+        f"Baseline F1-score: {f1_score:.4f}\n\n"
+        f"Classification Report:\n"
+        f"{report}\n"
+        f"Confusion Matrix [fake, real]:\n"
+        f"{matrix}\n"
+    )
+
+    result_path = (
+        RESULT_DIR /
+        "baseline_results.txt"
+    )
+
+    result_path.write_text(
+        result_text,
+        encoding="utf-8",
+    )
+
+    print("\nBaseline model saved:", model_path)
+    print("Results saved:", result_path)
+
+
+if __name__ == "__main__":
+    main()
