@@ -1,20 +1,4 @@
-"""
-Train improved few-shot fake-news classifiers.
 
-The model combines:
-
-1. Word-level TF-IDF features
-2. Character-level TF-IDF features
-3. Logistic Regression
-4. Validation-based hyperparameter selection
-
-Models created:
-
-    models/few_4_shot_model.pkl
-    models/few_8_shot_model.pkl
-    models/few_16_shot_model.pkl
-    models/few_32_shot_model.pkl
-"""
 
 from __future__ import annotations
 
@@ -60,9 +44,7 @@ RESULT_DIR.mkdir(
 def build_model(
     c_value: float = 2.0,
 ) -> Pipeline:
-    """
-    Build the word + character TF-IDF model.
-    """
+    
 
     feature_extractor = FeatureUnion(
         [
@@ -117,9 +99,7 @@ def build_model(
 def load_dataset(
     file_path: Path,
 ) -> pd.DataFrame:
-    """
-    Load and validate a processed dataset.
-    """
+    
 
     if not file_path.exists():
         raise FileNotFoundError(

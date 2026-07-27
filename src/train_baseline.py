@@ -1,9 +1,4 @@
-"""
-Train the full-data baseline model.
 
-This model uses the entire training dataset and is expected to
-be more stable than the few-shot models.
-"""
 
 from pathlib import Path
 
@@ -38,9 +33,7 @@ RESULT_DIR.mkdir(
 def load_dataset(
     file_path: Path,
 ) -> pd.DataFrame:
-    """
-    Load and clean a processed CSV file.
-    """
+    
 
     if not file_path.exists():
         raise FileNotFoundError(

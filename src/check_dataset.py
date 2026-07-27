@@ -1,12 +1,4 @@
-"""
-Check processed datasets for:
 
-- Class balance
-- Missing values
-- Duplicate articles
-- Very short articles
-- Train/validation/test data leakage
-"""
 
 from pathlib import Path
 

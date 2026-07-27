@@ -1,12 +1,4 @@
-"""
-Interactive fake-news prediction system.
 
-Features:
-- Displays real and fake probabilities
-- Returns "uncertain" for low-confidence predictions
-- Uses LIME to explain important features
-- Displays features supporting and opposing the prediction
-"""
 
 from __future__ import annotations
 
@@ -129,18 +121,12 @@ def clean_lime_feature(feature: object) -> str:
     return feature_text
 
 
-# ---------------------------------------------------------
+
 # PREDICTION FUNCTION
-# ---------------------------------------------------------
+
 
 def predict_with_reason(news_text: str) -> dict:
-    """
-    Predict whether the input resembles real or fake news.
-
-    Important:
-    This model detects learned language patterns.
-    It does not independently verify facts online.
-    """
+   
 
     cleaned_text = clean_text(news_text)
     word_count = len(cleaned_text.split())

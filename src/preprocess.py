@@ -1,11 +1,4 @@
-"""
-Preprocess raw fake-news datasets.
 
-Creates:
-    data/processed/train_clean.csv
-    data/processed/validation_clean.csv
-    data/processed/test_clean.csv
-"""
 
 from __future__ import annotations
 
@@ -251,9 +244,7 @@ def prepare_dataset(file_name: str) -> pd.DataFrame:
 
 
 def main() -> None:
-    """
-    Process train, validation and test datasets.
-    """
+    
 
     dataset_files = {
         "train_set.csv": "train_clean.csv",

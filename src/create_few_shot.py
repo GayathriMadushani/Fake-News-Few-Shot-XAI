@@ -1,15 +1,4 @@
-"""
-Create balanced and diverse few-shot datasets.
 
-Creates:
-
-    data/processed/few_shot/few_4_shot.csv
-    data/processed/few_shot/few_8_shot.csv
-    data/processed/few_shot/few_16_shot.csv
-    data/processed/few_shot/few_32_shot.csv
-
-Each k-shot dataset contains k fake and k real examples.
-"""
 
 from __future__ import annotations
 
@@ -37,14 +26,7 @@ def diverse_sample(
     k: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """
-    Select diverse articles using TF-IDF clustering.
-
-    Instead of selecting random articles, this function:
-    1. Converts articles into TF-IDF vectors.
-    2. Creates k clusters.
-    3. Selects one representative article from each cluster.
-    """
+   
 
     class_df = (
         class_df
@@ -135,9 +117,7 @@ def create_few_shot_data(
     k: int,
     seed: int = 42,
 ) -> pd.DataFrame:
-    """
-    Create one balanced k-shot dataset.
-    """
+    
 
     selected_parts = []
 

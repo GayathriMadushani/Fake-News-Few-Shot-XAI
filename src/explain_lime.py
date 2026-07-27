@@ -1,10 +1,4 @@
-"""
-Generate an HTML LIME explanation for one test article.
 
-The HTML output is saved in:
-
-    outputs/xai/
-"""
 
 from pathlib import Path
 
