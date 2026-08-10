@@ -1,18 +1,18 @@
-Baseline Accuracy: 0.9607
-Baseline Precision: 0.9609
-Baseline Recall: 0.9607
-Baseline F1-score: 0.9607
+Baseline Accuracy: 0.9632
+Baseline Precision: 0.9632
+Baseline Recall: 0.9632
+Baseline F1-score: 0.9632
 
 Classification Report:
               precision    recall  f1-score   support
 
-        fake       0.95      0.97      0.96       492
-        real       0.97      0.95      0.96       500
+        fake       0.97      0.96      0.96       452
+        real       0.96      0.97      0.97       499
 
-    accuracy                           0.96       992
-   macro avg       0.96      0.96      0.96       992
-weighted avg       0.96      0.96      0.96       992
+    accuracy                           0.96       951
+   macro avg       0.96      0.96      0.96       951
+weighted avg       0.96      0.96      0.96       951
 
 Confusion Matrix [fake, real]:
-[[478  14]
- [ 25 475]]
+[[432  20]
+ [ 15 484]]

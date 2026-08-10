@@ -6,9 +6,12 @@
   ],
   "training_samples": 16,
   "examples_per_class": 8,
-  "best_C": 4.0,
-  "validation_macro_f1": 0.6978575978374011,
-  "test_accuracy": 0.7127016129032258,
-  "test_weighted_f1": 0.6919894349673048,
-  "recommended_uncertain_threshold": 0.6
+  "best_C": 2.0,
+  "cv_method": "RepeatedStratifiedKFold",
+  "cv_splits": 4,
+  "cv_repeats": 5,
+  "cv_macro_f1_mean": 0.7083333333333334,
+  "cv_macro_f1_std": 0.26052830940226057,
+  "test_accuracy": 0.7718191377497371,
+  "test_weighted_f1": 0.762945612729866
 }

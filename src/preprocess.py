@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from sklearn.model_selection import train_test_split
+
 
 RAW_DIR = Path("data/raw")
 PROCESSED_DIR = Path("data/processed")
@@ -229,8 +231,8 @@ def prepare_dataset(file_name: str) -> pd.DataFrame:
 
     # Remove duplicated articles
     processed_df = processed_df.drop_duplicates(
-        subset=["clean_text"]
-    )
+    subset=["clean_text", "label"]
+)
 
     processed_df = processed_df.reset_index(
         drop=True
@@ -244,25 +246,81 @@ def prepare_dataset(file_name: str) -> pd.DataFrame:
 
 
 def main() -> None:
-    
+    raw_files = [
+        "train_set.csv",
+        "validation_set.csv",
+        "test_set.csv",
+    ]
 
-    dataset_files = {
-        "train_set.csv": "train_clean.csv",
-        "validation_set.csv": "validation_clean.csv",
-        "test_set.csv": "test_clean.csv",
+    processed_parts = [
+        prepare_dataset(file_name)
+        for file_name in raw_files
+    ]
+
+    combined_df = pd.concat(
+        processed_parts,
+        ignore_index=True,
+    )
+
+    # Remove articles that have conflicting labels
+    conflicting_rows = (
+        combined_df.groupby("clean_text")["label"]
+        .transform("nunique")
+        .gt(1)
+    )
+
+    conflicting_text_count = combined_df.loc[
+        conflicting_rows,
+        "clean_text",
+    ].nunique()
+
+    combined_df = combined_df.loc[
+        ~conflicting_rows
+    ].copy()
+
+    # Remove duplicates globally before splitting
+    combined_df = combined_df.drop_duplicates(
+        subset=["clean_text"]
+    ).reset_index(drop=True)
+
+    # Create 80% temporary training and 20% testing
+    train_validation_df, test_df = train_test_split(
+        combined_df,
+        test_size=0.20,
+        random_state=42,
+        stratify=combined_df["label"],
+    )
+
+    # Final proportions: 64% train, 16% validation, 20% test
+    train_df, validation_df = train_test_split(
+        train_validation_df,
+        test_size=0.20,
+        random_state=42,
+        stratify=train_validation_df["label"],
+    )
+
+    output_datasets = {
+        "train_clean.csv": train_df,
+        "validation_clean.csv": validation_df,
+        "test_clean.csv": test_df,
     }
 
-    for raw_file, processed_file in dataset_files.items():
-        processed_df = prepare_dataset(raw_file)
+    for file_name, dataframe in output_datasets.items():
+        output_path = PROCESSED_DIR / file_name
 
-        output_path = PROCESSED_DIR / processed_file
-
-        processed_df.to_csv(
+        dataframe.to_csv(
             output_path,
             index=False,
         )
 
-        print("Saved:", output_path)
+        print("\nSaved:", output_path)
+        print("Samples:", len(dataframe))
+        print(dataframe["label"].value_counts())
+
+    print(
+        "\nConflicting articles removed:",
+        conflicting_text_count,
+    )
 
     print("\nPreprocessing completed successfully.")
 

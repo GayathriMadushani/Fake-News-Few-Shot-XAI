@@ -7,3 +7,5 @@ Fake-News-Detection-and-Classification-A-Comparative-Study-of-CNN-LLMs-and-NLP-M
 
 .DS_Store
 Thumbs.db
+# Locally trained SetFit models - too large for GitHub
+models/setfit_distilroberta_*/

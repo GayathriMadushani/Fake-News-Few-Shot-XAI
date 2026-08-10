@@ -1,16 +1,13 @@
-
-
 from __future__ import annotations
 
 import json
 from pathlib import Path
 
 import joblib
+import numpy as np
 import pandas as pd
 
-from sklearn.feature_extraction.text import (
-    TfidfVectorizer,
-)
+from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score,
@@ -18,10 +15,11 @@ from sklearn.metrics import (
     confusion_matrix,
     precision_recall_fscore_support,
 )
-from sklearn.pipeline import (
-    FeatureUnion,
-    Pipeline,
+from sklearn.model_selection import (
+    RepeatedStratifiedKFold,
+    cross_val_score,
 )
+from sklearn.pipeline import FeatureUnion, Pipeline
 
 
 DATA_DIR = Path("data/processed")
@@ -44,8 +42,6 @@ RESULT_DIR.mkdir(
 def build_model(
     c_value: float = 2.0,
 ) -> Pipeline:
-    
-
     feature_extractor = FeatureUnion(
         [
             (
@@ -80,35 +76,23 @@ def build_model(
         random_state=42,
     )
 
-    model = Pipeline(
+    return Pipeline(
         [
-            (
-                "features",
-                feature_extractor,
-            ),
-            (
-                "classifier",
-                classifier,
-            ),
+            ("features", feature_extractor),
+            ("classifier", classifier),
         ]
     )
-
-    return model
 
 
 def load_dataset(
     file_path: Path,
 ) -> pd.DataFrame:
-    
-
     if not file_path.exists():
         raise FileNotFoundError(
             f"Dataset was not found: {file_path}"
         )
 
-    df = pd.read_csv(
-        file_path
-    )
+    df = pd.read_csv(file_path)
 
     df = df.dropna(
         subset=["clean_text", "label"]
@@ -132,19 +116,13 @@ def load_dataset(
     ]
 
     df = df[
-        df["label"].isin(
-            ["fake", "real"]
-        )
+        df["label"].isin(["fake", "real"])
     ]
 
     return df
 
 
 def main() -> None:
-    validation_df = load_dataset(
-        DATA_DIR / "validation_clean.csv"
-    )
-
     test_df = load_dataset(
         DATA_DIR / "test_clean.csv"
     )
@@ -156,7 +134,6 @@ def main() -> None:
         32,
     ]
 
-    # Regularization values tested using validation data
     candidate_c_values = [
         0.25,
         0.5,
@@ -173,71 +150,87 @@ def main() -> None:
         print("=" * 70)
 
         few_shot_path = (
-            FEW_SHOT_DIR /
-            f"few_{k}_shot.csv"
+            FEW_SHOT_DIR
+            / f"few_{k}_shot.csv"
         )
 
         train_df = load_dataset(
             few_shot_path
         )
 
-        print("Training samples:", len(train_df))
+        print(
+            "Training samples:",
+            len(train_df),
+        )
         print("Training labels:")
-        print(train_df["label"].value_counts())
+        print(
+            train_df["label"].value_counts()
+        )
 
-        best_model = None
+        minimum_class_samples = int(
+            train_df["label"]
+            .value_counts()
+            .min()
+        )
+
+        cv_splits = min(
+            4,
+            minimum_class_samples,
+        )
+
+        cv_repeats = 5
+
+        cross_validation = (
+            RepeatedStratifiedKFold(
+                n_splits=cv_splits,
+                n_repeats=cv_repeats,
+                random_state=42,
+            )
+        )
+
         best_c_value = None
-        best_validation_f1 = -1.0
+        best_cv_f1_mean = -1.0
+        best_cv_f1_std = 0.0
 
-        # Select the best Logistic Regression C value
+        # Select C using only the few-shot
+        # training samples.
         for c_value in candidate_c_values:
             candidate_model = build_model(
                 c_value=c_value
             )
 
-            candidate_model.fit(
+            cv_scores = cross_val_score(
+                candidate_model,
                 train_df["clean_text"],
                 train_df["label"],
+                scoring="f1_macro",
+                cv=cross_validation,
+                n_jobs=-1,
             )
 
-            validation_predictions = (
-                candidate_model.predict(
-                    validation_df["clean_text"]
-                )
+            cv_f1_mean = float(
+                np.mean(cv_scores)
             )
 
-            validation_metrics = (
-                precision_recall_fscore_support(
-                    validation_df["label"],
-                    validation_predictions,
-                    average="macro",
-                    zero_division=0,
-                )
-            )
-
-            validation_macro_f1 = (
-                validation_metrics[2]
+            cv_f1_std = float(
+                np.std(cv_scores)
             )
 
             print(
                 f"C={c_value:<4} "
-                f"Validation macro F1="
-                f"{validation_macro_f1:.4f}"
+                f"CV macro F1="
+                f"{cv_f1_mean:.4f} "
+                f"(+/- {cv_f1_std:.4f})"
             )
 
-            if (
-                validation_macro_f1
-                > best_validation_f1
-            ):
-                best_model = candidate_model
+            if cv_f1_mean > best_cv_f1_mean:
                 best_c_value = c_value
-                best_validation_f1 = (
-                    validation_macro_f1
-                )
+                best_cv_f1_mean = cv_f1_mean
+                best_cv_f1_std = cv_f1_std
 
-        if best_model is None:
+        if best_c_value is None:
             raise RuntimeError(
-                "No model was successfully trained."
+                "No C value was selected."
             )
 
         print(
@@ -246,11 +239,27 @@ def main() -> None:
         )
 
         print(
-            "Best validation macro F1:",
-            round(best_validation_f1, 4),
+            "Best CV macro F1:",
+            round(best_cv_f1_mean, 4),
         )
 
-        # Evaluate the selected model on test data
+        print(
+            "CV standard deviation:",
+            round(best_cv_f1_std, 4),
+        )
+
+        # Train the selected model using all
+        # available few-shot training samples.
+        best_model = build_model(
+            c_value=best_c_value
+        )
+
+        best_model.fit(
+            train_df["clean_text"],
+            train_df["label"],
+        )
+
+        # Use the test set only for final evaluation.
         test_predictions = best_model.predict(
             test_df["clean_text"]
         )
@@ -285,18 +294,27 @@ def main() -> None:
             labels=["fake", "real"],
         )
 
-        print("\nTest Accuracy:", round(test_accuracy, 4))
-        print("Test Weighted F1:", round(test_f1, 4))
+        print(
+            "\nTest Accuracy:",
+            round(test_accuracy, 4),
+        )
+
+        print(
+            "Test Weighted F1:",
+            round(test_f1, 4),
+        )
 
         print("\nClassification Report:")
         print(report)
 
-        print("Confusion Matrix [fake, real]:")
+        print(
+            "Confusion Matrix [fake, real]:"
+        )
         print(matrix)
 
         model_path = (
-            MODEL_DIR /
-            f"few_{k}_shot_model.pkl"
+            MODEL_DIR
+            / f"few_{k}_shot_model.pkl"
         )
 
         joblib.dump(
@@ -305,16 +323,28 @@ def main() -> None:
         )
 
         metadata = {
-            "model_name": f"few_{k}_shot_model",
+            "model_name": (
+                f"few_{k}_shot_model"
+            ),
             "classes": [
                 str(label)
                 for label in best_model.classes_
             ],
-            "training_samples": len(train_df),
+            "training_samples": len(
+                train_df
+            ),
             "examples_per_class": k,
             "best_C": best_c_value,
-            "validation_macro_f1": float(
-                best_validation_f1
+            "cv_method": (
+                "RepeatedStratifiedKFold"
+            ),
+            "cv_splits": cv_splits,
+            "cv_repeats": cv_repeats,
+            "cv_macro_f1_mean": (
+                best_cv_f1_mean
+            ),
+            "cv_macro_f1_std": (
+                best_cv_f1_std
             ),
             "test_accuracy": float(
                 test_accuracy
@@ -322,12 +352,11 @@ def main() -> None:
             "test_weighted_f1": float(
                 test_f1
             ),
-            "recommended_uncertain_threshold": 0.60,
         }
 
         metadata_path = (
-            MODEL_DIR /
-            f"few_{k}_shot_model.json"
+            MODEL_DIR
+            / f"few_{k}_shot_model.json"
         )
 
         metadata_path.write_text(
@@ -341,10 +370,15 @@ def main() -> None:
         all_results.append(
             {
                 "shot": k,
-                "training_samples": len(train_df),
+                "training_samples": len(
+                    train_df
+                ),
                 "best_C": best_c_value,
-                "validation_macro_f1": (
-                    best_validation_f1
+                "cv_macro_f1_mean": (
+                    best_cv_f1_mean
+                ),
+                "cv_macro_f1_std": (
+                    best_cv_f1_std
                 ),
                 "accuracy": test_accuracy,
                 "precision": test_precision,
@@ -353,16 +387,23 @@ def main() -> None:
             }
         )
 
-        print("\nModel saved:", model_path)
-        print("Metadata saved:", metadata_path)
+        print(
+            "\nModel saved:",
+            model_path,
+        )
+
+        print(
+            "Metadata saved:",
+            metadata_path,
+        )
 
     results_df = pd.DataFrame(
         all_results
     )
 
     results_path = (
-        RESULT_DIR /
-        "few_shot_results.csv"
+        RESULT_DIR
+        / "few_shot_results.csv"
     )
 
     results_df.to_csv(
@@ -374,9 +415,16 @@ def main() -> None:
     print("ALL FEW-SHOT RESULTS")
     print("=" * 70)
 
-    print(results_df.to_string(index=False))
+    print(
+        results_df.to_string(
+            index=False
+        )
+    )
 
-    print("\nResults saved:", results_path)
+    print(
+        "\nResults saved:",
+        results_path,
+    )
 
 
 if __name__ == "__main__":

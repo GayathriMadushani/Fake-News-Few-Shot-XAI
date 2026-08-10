@@ -21,7 +21,7 @@ MODEL_PATH = Path("models/few_32_shot_model.pkl")
 # and uncomment the line below:
 # MODEL_PATH = Path("models/baseline_tfidf_logistic.pkl")
 
-UNCERTAIN_THRESHOLD = 0.55
+UNCERTAIN_THRESHOLD = 0.58
 MINIMUM_WORDS = 8
 
 
