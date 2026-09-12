@@ -183,6 +183,7 @@ def main() -> None:
         8,
         16,
         32,
+         64,
     ]
 
     for k in shot_values:

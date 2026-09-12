@@ -383,3 +383,9 @@ if __name__ == "__main__":
 
     #fake
     #Breaking news: Scientists have discovered a new planet made entirely of chocolate, defying all
+ 
+    #git clone https://github.com/GayathriMadushani/Fake-News-Few-Shot-XAI.git
+#cd Fake-News-Few-Shot-XAI
+#python -m venv .venv
+#.\.venv\Scripts\Activate.ps1
+#pip install -r requirements.txt
