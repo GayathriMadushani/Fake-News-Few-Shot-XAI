@@ -1,0 +1,2 @@
+shot,training_samples,training_minutes,validation_accuracy,validation_macro_f1,validation_weighted_f1,test_accuracy,test_precision,test_recall,test_weighted_f1,test_macro_f1
+64,128,26.899670084317524,0.9039473684210526,0.9034040160111152,0.9037662509510734,0.9295478443743428,0.9295898502577816,0.9295478443743428,0.9295183032118981,0.9293199554069119
