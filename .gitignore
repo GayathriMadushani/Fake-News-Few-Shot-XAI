@@ -9,3 +9,17 @@ Fake-News-Detection-and-Classification-A-Comparative-Study-of-CNN-LLMs-and-NLP-M
 Thumbs.db
 # Locally trained SetFit models - too large for GitHub
 models/setfit_distilroberta_*/
+
+.venv/
+__pycache__/
+*.pyc
+*.zip
+
+# Large models and checkpoints
+models/
+outputs/setfit_bias_aware_64_checkpoints/
+outputs/setfit_checkpoints/
+outputs/setfit_test_checkpoints/
+
+# Raw downloaded Sinhala dataset
+data/raw/sinhala/Corpus.xlsx
