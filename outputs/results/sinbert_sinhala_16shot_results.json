@@ -1,0 +1,49 @@
+{
+  "model": "NLPC-UOM/SinBERT-small",
+  "training_samples": 32,
+  "validation_samples": 178,
+  "test_samples": 222,
+  "best_validation_macro_f1": 0.6445637953590856,
+  "test": {
+    "accuracy": 0.8108108108108109,
+    "balanced_accuracy": 0.6927272727272726,
+    "macro_f1": 0.6262626262626263,
+    "classification_report": {
+      "fake": {
+        "precision": 0.2727272727272727,
+        "recall": 0.5454545454545454,
+        "f1-score": 0.36363636363636365,
+        "support": 22.0
+      },
+      "real": {
+        "precision": 0.9438202247191011,
+        "recall": 0.84,
+        "f1-score": 0.8888888888888888,
+        "support": 200.0
+      },
+      "accuracy": 0.8108108108108109,
+      "macro avg": {
+        "precision": 0.6082737487231868,
+        "recall": 0.6927272727272726,
+        "f1-score": 0.6262626262626263,
+        "support": 222.0
+      },
+      "weighted avg": {
+        "precision": 0.8773155177649559,
+        "recall": 0.8108108108108109,
+        "f1-score": 0.8368368368368369,
+        "support": 222.0
+      }
+    },
+    "confusion_matrix": [
+      [
+        12,
+        10
+      ],
+      [
+        32,
+        168
+      ]
+    ]
+  }
+}

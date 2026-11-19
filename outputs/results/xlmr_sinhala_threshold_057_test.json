@@ -1,0 +1,20 @@
+{
+  "model": "XLM-RoBERTa Sinhala-only",
+  "threshold": 0.57,
+  "threshold_selected_using": "Sinhala validation set",
+  "test_samples": 222,
+  "accuracy": 0.8648648648648649,
+  "macro_f1": 0.6362246012672056,
+  "fake_precision": 0.3333333333333333,
+  "fake_recall": 0.36363636363636365,
+  "confusion_matrix": [
+    [
+      8,
+      14
+    ],
+    [
+      16,
+      184
+    ]
+  ]
+}

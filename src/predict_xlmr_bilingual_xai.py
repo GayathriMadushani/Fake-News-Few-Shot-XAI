@@ -6,6 +6,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
+#python .\src\predict_xlmr_bilingual_xai.py   
 # Keep model caches on the E: drive.
 os.environ.setdefault("HF_HOME", r"E:\AI_Cache\huggingface")
 os.environ.setdefault("HF_HUB_CACHE", r"E:\AI_Cache\huggingface\hub")

@@ -1,0 +1,5 @@
+setting,accuracy,macro_f1
+A. Original train / original test,0.953732912723449,0.953566102056035
+B. Original model / masked test,0.9484752891692955,0.9483086241035624
+C. Retrained on masked / masked test,0.9495268138801262,0.9493574268673672
+D. Length only (word and char count),0.6382754994742377,0.6230712508065259
